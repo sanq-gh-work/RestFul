@@ -3,6 +3,7 @@ package com.sanq.example.RestFul;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -36,10 +37,10 @@ public class Launcher extends Activity {
     public static Launcher getInstance() {
         return instance;
     }
+
     public static Context getContext() {
         return getInstance().getApplicationContext();
     }
-
 
 
     @Override
@@ -71,26 +72,17 @@ public class Launcher extends Activity {
         int sizeData = 0;
         String data = "";
 
-                //("MyLog", "");
-
-
-
         @Override
         protected void onPreExecute() {
-
-           // Log.d("MyLog", "ok 0");
-
-
             dialog.setMessage("Please wait...");
             dialog.show();
-
             try {
                 data += "&" + URLEncoder.encode("data", "UTF-8") + "=" + txtServerText.getText();
+                Log.d(Cnt.TAG, "data:: " + data);
             } catch (UnsupportedEncodingException ex) {
                 ex.printStackTrace();
             }
         }
-
 
         @Override
         protected Void doInBackground(String... urls) {
@@ -100,7 +92,9 @@ public class Launcher extends Activity {
 
                 URLConnection con = url.openConnection();
                 con.setDoOutput(true);
+                Log.d(Cnt.TAG, "ok 0");
                 OutputStreamWriter wr = new OutputStreamWriter(con.getOutputStream());
+                Log.d(Cnt.TAG, "ok 1");
                 wr.write(data);
                 wr.flush();
 
@@ -110,13 +104,15 @@ public class Launcher extends Activity {
                 StringBuilder sb = new StringBuilder();
                 String line = null;
 
-                while( (line = reader.readLine()) != null ){
+                while ((line = reader.readLine()) != null) {
                     sb.append(line + " ");
                 }
                 content = sb.toString();
 
             } catch (Exception ex) {
                 error = ex.getMessage();
+
+                Log.e(Cnt.TAG, "Error :::" + error);
             } finally {
                 try {
                     reader.close();
@@ -127,44 +123,47 @@ public class Launcher extends Activity {
         }
 
         @Override
-        protected void onPostExecute(Void unused){
+        protected void onPostExecute(Void unused) {
             dialog.dismiss();
 
-            if (error != null){
+            if (error != null) {
+                txtOutput.setTextColor(Color.RED);
                 txtOutput.setText("Output : " + error);
-            }else {
+            } else {
+
                 txtOutput.setText(content);
-            }
 
-            /****************** Start Parse Response JSON Data *************/
+                /****************** Start Parse Response JSON Data *************/
 
-            String outData = "";
-            JSONObject jsonResponse;
+                String outData = "";
+                JSONObject jsonResponse;
 
-            try {
-                jsonResponse = new JSONObject(content);
-                JSONArray jsonMainNode = jsonResponse.optJSONArray("Android");
+                try {
+                    jsonResponse = new JSONObject(content);
+                    JSONArray jsonMainNode = jsonResponse.optJSONArray("Android");
 
-                int lengthJsonArr = jsonMainNode.length();
+                    int lengthJsonArr = jsonMainNode.length();
 
-                for (int i = 0;i<lengthJsonArr;i++){
-                    JSONObject jsonChildNode = jsonMainNode.getJSONObject(i);
+                    for (int i = 0; i < lengthJsonArr; i++) {
+                        JSONObject jsonChildNode = jsonMainNode.getJSONObject(i);
 
-                    String name = jsonChildNode.optString("name");
-                    String number = jsonChildNode.optString("number");
-                    String date_added = jsonChildNode.optString("date_added");
+                        String name = jsonChildNode.optString("name");
+                        String number = jsonChildNode.optString("number");
+                        String date_added = jsonChildNode.optString("date_added");
 
-                    outData +="Name                : " + name
-                            + "Number              : " + number
-                            + "Time                : " + date_added
-                            + "--------------------------------------------------------------";
+                        outData += "Name                : " + name
+                                + "Number              : " + number
+                                + "Time                : " + date_added
+                                + "--------------------------------------------------------------";
 
-                    txtJsonParsed.setText(outData);
+                        txtJsonParsed.setText(outData);
+                    }
+                } catch (JSONException ex) {
+                    ex.printStackTrace();
                 }
+
             }
-            catch(JSONException ex){
-                ex.printStackTrace();
-            }
+
         }
 
     }
